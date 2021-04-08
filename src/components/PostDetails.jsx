@@ -1,48 +1,44 @@
-import React, { Component, Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import React, { Fragment, useEffect, useState, useCallback } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import SyncLoader from 'react-spinners/SyncLoader'
 import { getPost } from '../services/BaseService';
 
-class PostDetails extends Component {
-  state = {
-    post: null,
-    loading: true
-  }
+const PostDetails = () => {
+  const { id } = useParams()
+  const [post, setPost] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  componentDidMount() {
-    this.fetchPost()
-  }
+  useEffect(() => {
+    setLoading(true)
+  }, [id])
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.match.params.id !== this.props.match.params.id) {
-      this.setState({ loading: true })
+  useEffect(() => {
+    if (post) {
+      setLoading(false)
     }
+  }, [post])
 
-    if (this.state.loading) {
-      this.fetchPost()
-    }
-  }
-
-  fetchPost = () => {
-    const { id } = this.props.match.params
-
+  const fetchFn = useCallback(() => {
     getPost(id)
-      .then(post => this.setState({ post, loading: false }))
-  }
+      .then(response => setPost(response))
+  }, [id])
 
-  render() {
-    const { loading, post } = this.state
-    const { id } = this.props.match.params
+  useEffect(() => {
+    if (loading) {
+      fetchFn()
+    }
+  }, [loading, fetchFn])
 
-    return (
-      <div className="PostDetails mt-3">
-        {
-          loading
-            ? (
-              <div className="text-center">
-                <SyncLoader color="blue"  />
-              </div>
-            ) : (
+  return (
+    <div className="PostDetails mt-3">
+      {
+        loading
+          ? (
+            <div className="text-center">
+              <SyncLoader color="blue"  />
+            </div>
+          ) : (
+            post && (
               <Fragment>
                 <h1>{post.title}</h1>
                 <p>{post.body}</p>
@@ -50,10 +46,10 @@ class PostDetails extends Component {
                 <Link className="btn btn-outline-primary" to={`/posts/${Number(id) + 1}`}>Next post</Link>
               </Fragment>
             )
-        }
-      </div>
-    );
-  }
+          )
+      }
+    </div>
+  );
 }
 
 export default PostDetails;
